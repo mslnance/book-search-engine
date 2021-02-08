@@ -1,11 +1,8 @@
-// see SignupForm.js for comments
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
 
 import { useMutation } from '@apollo/react-hooks';
 import { LOGIN_USER } from '../utils/mutations';
-
-// import { loginUser } from '../utils/API';
 
 import Auth from '../utils/auth';
 
@@ -13,7 +10,17 @@ const LoginForm = () => {
   const [userFormData, setUserFormData] = useState({ email: '', password: '' });
   const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [login] = useMutation(LOGIN_USER);
+
+  const [login, { error }] = useMutation(LOGIN_USER);
+
+  useEffect(() => {
+    if (error) {
+      setShowAlert(true);
+    } else {
+      setShowAlert(false);
+    }
+  }, [error]);
+
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setUserFormData({ ...userFormData, [name]: value });
@@ -22,7 +29,6 @@ const LoginForm = () => {
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
-    // check if form has everything (as per react-bootstrap docs)
     const form = event.currentTarget;
     if (form.checkValidity() === false) {
       event.preventDefault();
@@ -31,18 +37,17 @@ const LoginForm = () => {
 
     try {
       const { data } = await login({
-        variables: {...userFormData}
+        variables: { ...userFormData },
       });
 
       console.log(data);
       Auth.login(data.login.token);
-    } catch (err) {
-      console.error(err);
-      setShowAlert(true);
+    } catch (e) {
+      console.error(e);
     }
 
+    // clear form values
     setUserFormData({
-      username: '',
       email: '',
       password: '',
     });
@@ -79,10 +84,7 @@ const LoginForm = () => {
           />
           <Form.Control.Feedback type='invalid'>Password is required!</Form.Control.Feedback>
         </Form.Group>
-        <Button
-          disabled={!(userFormData.email && userFormData.password)}
-          type='submit'
-          variant='success'>
+        <Button disabled={!(userFormData.email && userFormData.password)} type='submit' variant='success'>
           Submit
         </Button>
       </Form>
